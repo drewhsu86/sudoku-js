@@ -4,9 +4,15 @@ window.onload = () => {
   // bind some dom elements
   const sudokuTable = document.querySelector('.sudokuTable')
   const verifyButton = document.querySelector('#verify')
+  const setButton = document.querySelector('#setNums')
 
   // store some game variables
   let sudokuBoard = []
+  let humanSet = []
+  let sudokuInputList = []
+  let numsColored = false
+
+  const humanSetColor = "lightblue"
 
   // generate sudoku cells, theres always a 9x9 square
   // let's use 2x2 matrix this time
@@ -19,9 +25,15 @@ window.onload = () => {
     console.log(verifySudoku())
   })
 
+  setButton.addEventListener('click', () => {
+    numsColored = numsColored ? false : true
+    setColorRun()
+    // change numsColored
+
+  })
+
 
   function generateBoard() {
-
 
     // first make the game board of data
     for (let i = 0; i < 9; i++) {
@@ -77,7 +89,12 @@ window.onload = () => {
             const x = bigx + smx
             const y = bigy + smy
             sudokuInput['data-key'] = x + '-' + y
-            sudokuInput.addEventListener('change', (e) => verifyInput(e))
+            sudokuInput.addEventListener('change', (e) => {
+              verifyInput(e)
+              setColorRun()
+              console.log(humanSet)
+            })
+            sudokuInputList.push(sudokuInput)
 
           }
 
@@ -100,7 +117,7 @@ window.onload = () => {
     const srcElem = e.srcElement
 
     // use the data-key to add it to the sudokuBoard array
-    console.log(srcElem['data-key'])
+    // console.log(srcElem['data-key'])
     const dataKey = srcElem['data-key'].split('-')
     const x = parseInt(dataKey[0])
     const y = parseInt(dataKey[1])
@@ -109,8 +126,14 @@ window.onload = () => {
     console.log(srcElem.value)
     const proposedNum = parseInt(srcElem.value)
 
-    if (proposedNum < 1 || proposedNum > 9) {
+    if (proposedNum < 1 || proposedNum > 9 || !proposedNum) {
       srcElem.value = ''
+      // erase it on the board and in humanSet
+      for (id in humanSet) {
+        if (humanSet[id].coord[0] === x && humanSet[id].coord[1] === y) {
+          humanSet.splice(id, 1)
+        }
+      }
     } else {
 
       // try out this value and verify, and reject if false 
@@ -118,9 +141,29 @@ window.onload = () => {
       if (verifyNoRepeat()) {
         // if no repeat is true then we can have the value
         srcElem.value = proposedNum
+        // add to human set as an object if true
+        let matchFound = false
+        for (id in humanSet) {
+          if (humanSet[id].coord[0] === x && humanSet[id].coord[1] === y) {
+            humanSet[id].value = proposedNum
+            matchFound = true
+          }
+        }
+        if (!matchFound) {
+          humanSet.push({
+            value: proposedNum,
+            coord: [x, y]
+          })
+        }
+
       } else {
         sudokuBoard[x][y] = 0
         srcElem.value = ''
+        for (id in humanSet) {
+          if (humanSet[id].coord[0] === x && humanSet[id].coord[1] === y) {
+            humanSet.splice(id, 1)
+          }
+        }
       }
 
     }
@@ -262,6 +305,41 @@ window.onload = () => {
   } // end of verifyNoRepeat
 
 
-  generateBoard()
 
+  // function for toggling the human set numbers
+  function setColorRun() {
+    // for all the inputs of class sudokuInput
+    // if their data keys have the right x,y
+    // set them to a new background color
+
+    for (inputElem of sudokuInputList) {
+      const dataKey = inputElem['data-key'].split('-')
+      const x = parseInt(dataKey[0])
+      const y = parseInt(dataKey[1])
+      console.log(dataKey)
+
+      for (setElem of humanSet) {
+        console.log(setElem.coord)
+        if (x === setElem.coord[0] && y === setElem.coord[1]) {
+          // if coords match, make this box colored
+          // or uncolor it if it's colored
+          if (!numsColored) {
+            inputElem.style.backgroundColor = null
+
+          } else {
+            inputElem.style.backgroundColor = humanSetColor
+
+          }
+
+        }
+      } // end of for loop through humanSet
+
+    } // end of for loop through sudokuInputList
+
+
+  } // end of setColorsRun
+
+
+  generateBoard()
+  // console.log(sudokuInputList)
 } // end of window.onload
