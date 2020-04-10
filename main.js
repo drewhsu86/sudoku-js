@@ -6,12 +6,15 @@ window.onload = () => {
   const setButton = document.querySelector('#setNums')
   const tryButton = document.querySelector('#trySolve')
   const iterButton = document.querySelector('#iterSols')
+  const resetButton = document.querySelector('#resetOrig')
+  const loadButton = document.querySelector('#loadBoards')
 
   // store some game variables
   let sudokuBoard = []
   let humanSet = []
   let sudokuInputList = []
   let numsColored = true
+  let iterCounter = 0
 
   // temporary boards
   let originalBoard = []
@@ -34,11 +37,13 @@ window.onload = () => {
 
   })
 
+  // try to solve event listener
   tryButton.addEventListener('click', () => {
     // empty out calculatedBoards
     // copy over to originalBoard
 
     originalBoard = copyBoard(sudokuBoard)
+
 
     // set number of results to zero here because
     // shouldn't do it in recursive function
@@ -48,12 +53,83 @@ window.onload = () => {
 
     console.log('trySolve', calculatedBoards)
 
-    if (calculatedBoards.length > 0) {
+    // set up iteration button 
+    iterButton.innerText = 'Iterate stored solutions: ' + 1 + '/' + calculatedBoards.length
 
+    // iteration counter
+    iterCounter = 0;
+
+    // print to board
+    if (calculatedBoards.length > 0) {
+      printBoard(calculatedBoards[iterCounter])
     }
 
   })
 
+  // iterate solutions event listener 
+  iterButton.addEventListener('click', () => {
+
+    if (calculatedBoards.length > 0) {
+      printBoard(calculatedBoards[iterCounter])
+      // if next one is greater than the last index
+      // loop back to zero
+      // or else iterate up
+      if (iterCounter + 1 > calculatedBoards.length - 1) {
+        iterCounter = 0
+        iterButton.innerText = 'Iterate stored solutions: ' + 1 + '/' + calculatedBoards.length
+      } else {
+        iterButton.innerText = 'Iterate stored solutions: ' + (iterCounter + 1) + '/' + calculatedBoards.length
+        iterCounter++
+      }
+    }
+
+  })
+
+  // reset board to only human inputs
+  resetButton.addEventListener('click', () => {
+    if (originalBoard) {
+      printBoard(originalBoard)
+    }
+  })
+
+  // load one of the randomly selected boards from loadBoards.js
+  // from const loadableBoards
+
+  loadButton.addEventListener('click', () => {
+    // if loadableBoards has boards then choose one at random
+    // else change the button to say no boards to load
+    if (loadableBoards) {
+      // empty out humanSet
+      humanSet = []
+
+      const randomIndex = Math.round(Math.random() * (loadableBoards.length - 1))
+      printBoard(loadableBoards[randomIndex])
+
+      // need to add each of the values to humanSet
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (sudokuBoard[i][j]) {
+            // add to humanset
+            humanSet.push({
+              value: sudokuBoard[i][j],
+              coord: [i, j]
+            })
+          }
+        }
+      } // end of for loop to add to humanSet
+
+      console.log(humanSet)
+
+      // add the colors for humanSet
+      setColorRun()
+    } else {
+      loadButton.innerText = 'Sorry, no boards'
+    }
+  })
+
+
+
+  // functions (  'o')
 
   function generateBoard() {
 
@@ -149,7 +225,8 @@ window.onload = () => {
     const proposedNum = parseInt(srcElem.value)
 
     if (proposedNum < 1 || proposedNum > 9 || !proposedNum) {
-      srcElem.value = ''
+      console.log(' -- input verify not valid -- ')
+      srcElem.value = null
       // erase it on the board and in humanSet
       for (id in humanSet) {
         if (humanSet[id].coord[0] === x && humanSet[id].coord[1] === y) {
@@ -160,7 +237,9 @@ window.onload = () => {
 
       // try out this value and verify, and reject if false 
       sudokuBoard[x][y] = proposedNum
+      console.log(' -- input verify repeat -- ')
       if (verifyNoRepeat()) {
+        console.log(' -- true -- ')
         // if no repeat is true then we can have the value
         srcElem.value = proposedNum
         // add to human set as an object if true
@@ -172,6 +251,7 @@ window.onload = () => {
           }
         }
         if (!matchFound) {
+          console.log(' -- false -- ')
           humanSet.push({
             value: proposedNum,
             coord: [x, y]
@@ -180,7 +260,8 @@ window.onload = () => {
 
       } else {
         sudokuBoard[x][y] = 0
-        srcElem.value = ''
+        srcElem.value = null
+        // remove from humanset
         for (id in humanSet) {
           if (humanSet[id].coord[0] === x && humanSet[id].coord[1] === y) {
             humanSet.splice(id, 1)
@@ -192,60 +273,6 @@ window.onload = () => {
     console.log(sudokuBoard)
   }
 
-
-
-  // function to verify sudokuBoard is a solution
-  function verifySudoku() {
-
-    for (let i = 0; i < 9; i++) {
-      // every row and col needs to sum up to 45 (and small boxes)
-      let rowSum = 0;
-      let colSum = 0;
-
-      for (let j = 0; j < 9; j++) {
-        rowSum += sudokuBoard[i][j]
-        colSum += sudokuBoard[j][i]
-
-      }
-
-      // console.log('row ' + i + ' : ' + rowSum)
-      // console.log('col ' + i + ' : ' + colSum)
-
-      // return false if sums not 45
-      // return false if numbers besides 0 repeat
-      if (rowSum !== 45) {
-        return false
-      }
-      if (colSum !== 45) {
-        return false
-      }
-
-    } // end of for loop for rows and col 
-
-    // check every smaller box of 9 elements
-    for (let bx = 0; bx <= 6; bx += 3) {
-      for (let by = 0; by <= 6; by += 3) {
-
-        let sum = 0
-        for (let sx = 0; sx <= 2; sx++) {
-          for (let sy = 0; sy <= 2; sy++) {
-            sum += sudokuBoard[sx + bx][sy + by]
-          }
-        }
-
-        if (sum !== 45) {
-          return false
-        }
-      }
-    } // end of for loops for smaller boxes
-
-    // also no repeats
-    if (!verifyNoRepeat) {
-      return false
-    }
-
-    return true
-  } // end of verifySudoku
 
 
   function verifyNoRepeat() {
@@ -381,6 +408,8 @@ window.onload = () => {
       const x = parseInt(dataKey[0])
       const y = parseInt(dataKey[1])
       // console.log(dataKey)
+      // start out with no color
+      inputElem.style.backgroundColor = null
 
       for (setElem of humanSet) {
         // console.log(setElem.coord)
@@ -468,11 +497,23 @@ window.onload = () => {
   } // end of copyBoard
 
   // function to copy matrix to browser
-  function printBoard() {
+  function printBoard(board) {
+    // replaces old sudokuBoard
+    sudokuBoard = copyBoard(board)
+
     for (inputBox of sudokuInputList) {
       // for each input
       // make the value the new number from the matrix
-      let datakey = inputBox['data-key'].split('-')
+      const dataKey = inputBox['data-key'].split('-')
+      const x = parseInt(dataKey[0])
+      const y = parseInt(dataKey[1])
+
+      if (sudokuBoard[x][y] !== 0) {
+        inputBox.value = sudokuBoard[x][y]
+      } else {
+        inputBox.value = null
+      }
+
 
       /// STOPPED HERE
 
