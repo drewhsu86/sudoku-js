@@ -3,14 +3,19 @@ window.onload = () => {
 
   // bind some dom elements
   const sudokuTable = document.querySelector('.sudokuTable')
-  const verifyButton = document.querySelector('#verify')
   const setButton = document.querySelector('#setNums')
+  const tryButton = document.querySelector('#trySolve')
+  const iterButton = document.querySelector('#iterSols')
 
   // store some game variables
   let sudokuBoard = []
   let humanSet = []
   let sudokuInputList = []
-  let numsColored = false
+  let numsColored = true
+
+  // temporary boards
+  let originalBoard = []
+  let calculatedBoards = []
 
   const humanSetColor = "lightblue"
 
@@ -21,14 +26,31 @@ window.onload = () => {
   // then generate <td> elements per cell
 
   // event listeners
-  verifyButton.addEventListener('click', () => {
-    console.log(verifySudoku())
-  })
 
   setButton.addEventListener('click', () => {
     numsColored = numsColored ? false : true
     setColorRun()
     // change numsColored
+
+  })
+
+  tryButton.addEventListener('click', () => {
+    // empty out calculatedBoards
+    // copy over to originalBoard
+
+    originalBoard = copyBoard(sudokuBoard)
+
+    // set number of results to zero here because
+    // shouldn't do it in recursive function
+    calculatedBoards = []
+
+    trySolve()
+
+    console.log('trySolve', calculatedBoards)
+
+    if (calculatedBoards.length > 0) {
+
+    }
 
   })
 
@@ -92,7 +114,7 @@ window.onload = () => {
             sudokuInput.addEventListener('change', (e) => {
               verifyInput(e)
               setColorRun()
-              console.log(humanSet)
+              console.log('humanSet', humanSet)
             })
             sudokuInputList.push(sudokuInput)
 
@@ -255,11 +277,6 @@ window.onload = () => {
         }
       }
 
-      // console.log(rowNum)
-      // console.log(colNum)
-
-      // return false if sums not 45
-      // return false if numbers besides 0 repeat
 
       for (num in rowNum) {
         if (num !== '0' && rowNum[num] > 1) {
@@ -305,6 +322,53 @@ window.onload = () => {
   } // end of verifyNoRepeat
 
 
+  // function verifyNoRepeatSingle
+
+  function verifyNoRepeatSingle(x, y, v) {
+    // only checks against repeats
+    // returns true if no repeats in rows and col
+    // and in small boxes
+
+    for (let i = 0; i < 9; i++) {
+
+      // cannot have same element in a row 
+      if (sudokuBoard[x][i] === v && i !== y) {
+        return false
+      }
+
+      // cannot have same element in a col 
+      if (sudokuBoard[i][y] === v && i !== x) {
+        return false
+      }
+
+    } // end of for loop for rows and cols
+
+
+    // check every smaller box of 9 elements
+    // starting index: Math.floor( x / 3 )
+    // ending index: Math.floor( x / 3 ) + 2
+    // same for y
+    const sqX = Math.floor(x / 3)
+    const sqY = Math.floor(y / 3)
+
+    // console.log('x third - ', sqX, ' y-third - ', sqY)
+
+    for (let bx = 3 * sqX; bx <= 3 * sqX + 2; bx++) {
+      for (let by = 3 * sqY; by <= 3 * sqY + 2; by++) {
+
+        // cannot have same element in a row 
+        if (sudokuBoard[bx][by] === v && !(bx === x && by === y)) {
+          return false
+        }
+
+      }
+    } // end of for loops for smaller box
+
+    return true
+
+  } // end of verifyNoRepeatSingle
+
+
 
   // function for toggling the human set numbers
   function setColorRun() {
@@ -316,10 +380,10 @@ window.onload = () => {
       const dataKey = inputElem['data-key'].split('-')
       const x = parseInt(dataKey[0])
       const y = parseInt(dataKey[1])
-      console.log(dataKey)
+      // console.log(dataKey)
 
       for (setElem of humanSet) {
-        console.log(setElem.coord)
+        // console.log(setElem.coord)
         if (x === setElem.coord[0] && y === setElem.coord[1]) {
           // if coords match, make this box colored
           // or uncolor it if it's colored
@@ -340,6 +404,84 @@ window.onload = () => {
   } // end of setColorsRun
 
 
+  // function try to solve one square at a time 
+
+  async function trySolve() {
+
+    // console.log('--- try solve ---')
+
+    // try every square, if its empty try every number 1-9 
+    for (let i = 0; i < 9; i++) {
+
+      for (let j = 0; j < 9; j++) {
+
+        // if the board value is zero try some numbers
+        if (sudokuBoard[i][j] === 0) {
+          for (let n = 1; n <= 9; n++) {
+
+            const checkVal = verifyNoRepeatSingle(i, j, n)
+
+            if (checkVal) {
+              console.log('x: ' + i + ' y: ' + j + ' v: ' + n)
+              sudokuBoard[i][j] = n
+              // console.log('try - ', copyBoard(sudokuBoard))
+              trySolve()
+              sudokuBoard[i][j] = 0
+            } else {
+              // console.log('- fail - ', n)
+            }
+
+            // recursive, if no more empty spaces, will reach the outside of the for loops to function scope
+          }
+
+          // exit the function here if no numbers work
+          // console.log('return - ', copyBoard(sudokuBoard))
+          return
+        }
+
+
+      }
+
+    } // end of for loops going across every box 
+
+    calculatedBoards.push(copyBoard(sudokuBoard))
+
+    // return
+
+  } // end of function trySolve
+
+
+
+  // function to copy boards because 2d array needs to be sliced on all levels
+  function copyBoard(board) {
+
+    let result = []
+
+    for (row of board) {
+
+      result.push(row.slice())
+
+    }
+
+    return result;
+
+  } // end of copyBoard
+
+  // function to copy matrix to browser
+  function printBoard() {
+    for (inputBox of sudokuInputList) {
+      // for each input
+      // make the value the new number from the matrix
+      let datakey = inputBox['data-key'].split('-')
+
+      /// STOPPED HERE
+
+    }
+  }
+
+
   generateBoard()
+
+  // console.log(copyBoard(sudokuBoard))
   // console.log(sudokuInputList)
 } // end of window.onload
