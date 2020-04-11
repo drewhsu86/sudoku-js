@@ -79,8 +79,8 @@ window.onload = () => {
         iterCounter = 0
         iterButton.innerText = 'Iterate stored solutions: ' + 1 + '/' + calculatedBoards.length
       } else {
-        iterButton.innerText = 'Iterate stored solutions: ' + (iterCounter + 1) + '/' + calculatedBoards.length
         iterCounter++
+        iterButton.innerText = 'Iterate stored solutions: ' + (iterCounter + 1) + '/' + calculatedBoards.length
       }
     }
 
