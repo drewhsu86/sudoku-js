@@ -43,6 +43,7 @@ window.onload = () => {
     // copy over to originalBoard
 
     originalBoard = copyBoard(sudokuBoard)
+    console.log('new board', originalBoard)
 
 
     // set number of results to zero here because
@@ -87,7 +88,7 @@ window.onload = () => {
 
   // reset board to only human inputs
   resetButton.addEventListener('click', () => {
-    if (originalBoard) {
+    if (originalBoard && typeof originalBoard.length > 0) {
       printBoard(originalBoard)
     }
   })
@@ -226,6 +227,7 @@ window.onload = () => {
 
     if (proposedNum < 1 || proposedNum > 9 || !proposedNum) {
       console.log(' -- input verify not valid -- ')
+      sudokuBoard[x][y] = 0
       srcElem.value = null
       // erase it on the board and in humanSet
       for (id in humanSet) {
