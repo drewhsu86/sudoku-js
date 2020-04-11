@@ -88,7 +88,7 @@ window.onload = () => {
 
   // reset board to only human inputs
   resetButton.addEventListener('click', () => {
-    if (originalBoard) {
+    if (originalBoard && typeof originalBoard.length > 0) {
       printBoard(originalBoard)
     }
   })
