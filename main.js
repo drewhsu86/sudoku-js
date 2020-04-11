@@ -8,6 +8,7 @@ window.onload = () => {
   const iterButton = document.querySelector('#iterSols')
   const resetButton = document.querySelector('#resetOrig')
   const loadButton = document.querySelector('#loadBoards')
+  const timerElem = document.querySelector('#timer')
 
   // store some game variables
   let sudokuBoard = []
@@ -39,6 +40,10 @@ window.onload = () => {
 
   // try to solve event listener
   tryButton.addEventListener('click', () => {
+    // use timer to print the start time
+    // and save hrs min sec 
+    const startTime = printTime('Start', false)
+
     // empty out calculatedBoards
     // copy over to originalBoard
 
@@ -64,6 +69,15 @@ window.onload = () => {
     if (calculatedBoards.length > 0) {
       printBoard(calculatedBoards[iterCounter])
     }
+
+    // use timer to append the end
+    const endTime = printTime('End', true)
+
+    const timeDiff = subtractTimes(endTime, startTime)
+
+    const timeFormatted = 'Diff' + ': ' + timeDiff[0] + ':' + timeDiff[1] + ':' + timeDiff[2]
+
+    timerElem.innerText += '\n' + timeFormatted
 
   })
 
@@ -520,6 +534,69 @@ window.onload = () => {
       /// STOPPED HERE
 
     }
+  }
+
+
+  // function to print the current time with a prefix
+  // to timerElem
+  function printTime(prefixText, appendTime) {
+    // appendTime boolean on whether we append or rewrite
+
+    // get current time
+    const currTime = new Date()
+
+    // grab hours, min, sec
+    const hrs = currTime.getHours()
+    const min = currTime.getMinutes()
+    const sec = currTime.getSeconds()
+
+    const timeFormatted = prefixText + ': ' + hrs + ':' + min + ':' + sec
+
+    // add to timerElem
+    if (appendTime) {
+      timerElem.innerText += '\n' + timeFormatted
+    } else {
+      timerElem.innerText = timeFormatted
+    }
+
+    return [hrs, min, sec]
+  }
+
+  // function that subtracts times in hr, min, sec
+  function subtractTimes(e, s) {
+    // inputs are arrays as triplets
+    let result = new Array(3)
+
+    // make some copies to not affect original arrays
+    let endTime = e.slice()
+    let startTime = s.slice()
+
+    // start at the last (seconds) and subtract
+    // carry over a one if necessary (from upper digit)
+    // for hours, carry over a one from "nowhere"
+    // which would be from the next day
+
+    // hrs from 0-23, min from 0-59, sec from 0-59
+    for (let i = 2; i >= 0; i--) {
+
+      // this term may be negative
+      result[i] = endTime[i] - startTime[i]
+
+      // check if carry over is needed
+      if (result[i] < 0) {
+        // for min and sec, the carry over is 60
+        // and we need to reduce the next value by 1
+        // else, we add 24 and take from nowhere
+        if (i > 0) {
+          result[i] += 60
+          endTime[i - 1]--
+        } else {
+          result[i] += 24
+        }
+      }
+    } // end of for loop over the triplets 
+
+    return result
   }
 
 
