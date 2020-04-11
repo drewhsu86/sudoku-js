@@ -451,7 +451,7 @@ window.onload = () => {
 
   // function try to solve one square at a time 
 
-  async function trySolve() {
+  function trySolve() {
 
     // console.log('--- try solve ---')
 
